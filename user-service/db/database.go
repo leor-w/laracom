@@ -17,6 +17,6 @@ func CreateConnection() (*gorm.DB, error) {
 	return gorm.Open(
 		"mysql",
 		fmt.Sprintf("%s:%s@(%s)/%s?charset=utf8&parseTime=True&loc=Local",
-			user, password, host, DBName),
+			host, DBName, user, password),
 	)
 }
