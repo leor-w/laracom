@@ -1,0 +1,35 @@
+# docker-compose.yml
+version: '3.3'
+
+services:
+  laracom-user-service:
+    depends_on:
+      - laracom-user-db
+    build:
+      ./user-service
+    ports:
+      - 9091:9091
+    environment:
+      MICRO_SERVER_ADDRESS: ":9091"
+      MICRO_REGISTRY: "mdns"
+      DB_HOST: "laracom-user-db:3306"
+      DB_NAME: "laracom_user"
+      DB_USER: "root"
+      DB_PASSWORD: "123456"
+
+  laracom-user-db:
+    image: mysql:5.7
+    container_name: laracom-user-db
+    ports:
+      - 3306:3306
+    volumes:
+      - db_data:/var/lib/mysql/DATA
+    restart: always
+    environment:
+      MYSQL_USER: "root"
+      MYSQL_PASSWORD: "123456"
+      MYSQL_DATABASE: "laracom_user"
+      MYSQL_ROOT_PASSWORD: "123456"
+
+volumes:
+  db_data: {}
