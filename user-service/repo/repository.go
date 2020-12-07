@@ -1,8 +1,8 @@
 package repo
 
 import (
-	"github.com/jinzhu/gorm"
 	pb "github.com/leor-w/laracom/user-service/proto/user"
+	"gorm.io/gorm"
 )
 
 type Repository interface {
@@ -35,7 +35,7 @@ func (repo *UserRepository) Get(id string) (*pb.User, error) {
 
 func (repo *UserRepository) GetByEmail(email string) (*pb.User, error) {
 	user := &pb.User{}
-	err := repo.Db.Where("email = ?", email).First(&user).Error
+	err := repo.Db.Where("email = ?", email).First(user).Error
 	if err != nil {
 		return nil, err
 	}

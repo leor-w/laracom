@@ -14,7 +14,6 @@ import (
 
 func main() {
 	db, err := database.CreateConnection()
-	defer db.Close()
 	if err != nil {
 		log.Fatalf("Could not connect to DB: %v", err)
 	}
@@ -25,7 +24,7 @@ func main() {
 	token := &service.TokenService{repo}
 
 	srv := micro.NewService(
-		micro.Name("laracom.user.service"),
+		micro.Name("laracom.service.user"),
 		micro.Version("latest"),
 	)
 	srv.Init()

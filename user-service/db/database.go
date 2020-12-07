@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 func CreateConnection() (*gorm.DB, error) {
@@ -13,10 +13,11 @@ func CreateConnection() (*gorm.DB, error) {
 	user := os.Getenv("DB_USER")
 	dbName := os.Getenv("DB_NAME")
 	password := os.Getenv("DB_PASSWORD")
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", user, password, host, dbName)
 
-	return gorm.Open(
-		"mysql",
-		fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local",
-			user, password, host, dbName),
-	)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+	return db.Debug(), nil
 }

@@ -28,7 +28,7 @@ func main() {
 		),
 	)
 
-	client := pb.NewUserService("laracom.user.service", service.Client())
+	client := pb.NewUserService("laracom.service.user", service.Client())
 	service.Init(
 		micro.Action(func(c *cli.Context) error {
 			name := c.String("name")
@@ -46,6 +46,22 @@ func main() {
 				logrus.Fatalf("创建用户失败: %v", err)
 			}
 			logrus.Infof("创建用户成功: %s", r.User.Id)
+
+			token, err := client.Auth(context.TODO(), &pb.User{
+				Email:    email,
+				Password: password,
+			})
+
+			if err != nil {
+				logrus.Errorf("用户登陆失败：%v", err)
+			}
+			logrus.Infof("用户登陆成功：%s", token.Token)
+
+			token, err = client.ValidateToken(context.TODO(), token)
+			if err != nil {
+				logrus.Errorf("用户验证失败: token [%v] error [%v]", token, err)
+			}
+			logrus.Infof("用户验证成功：%v", token.Valid)
 
 			getAll, err := client.GetAll(context.Background(), &pb.Request{})
 			if err != nil {
