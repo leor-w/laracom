@@ -17,6 +17,11 @@ services:
       DB_USER: "root"
       DB_PASSWORD: "123456"
 
+  laracom-user-cli:
+    build: ./user-cli
+    environment:
+      MICRO_REGISTRY: "mdns"
+
   laracom-user-db:
     image: mysql:5.7
     container_name: laracom-user-db
@@ -26,15 +31,8 @@ services:
       - db_data:/var/lib/mysql
     restart: always
     environment:
-      MYSQL_USER: "root"
-      MYSQL_PASSWORD: "123456"
       MYSQL_DATABASE: "laracom_user"
       MYSQL_ROOT_PASSWORD: "123456"
-
-  laracom-user-cli:
-    build: ./user-cli
-    environment:
-      MICRO_REGISTRY: "mdns"
 
 volumes:
   db_data: {}

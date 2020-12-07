@@ -2,14 +2,18 @@ package handler
 
 import (
 	"context"
+	"fmt"
 
 	pb "github.com/leor-w/laracom/user-service/proto/user"
 	"github.com/leor-w/laracom/user-service/repo"
+	"github.com/leor-w/laracom/user-service/service"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
-	Repo repo.Repository
+	Repo  repo.Repository
+	Token service.Authable
 }
 
 func (srv *UserService) Get(ctx context.Context, req *pb.User, resp *pb.Response) error {
@@ -40,5 +44,48 @@ func (srv *UserService) Create(ctx context.Context, req *pb.User, resp *pb.Respo
 	if err != nil {
 		return err
 	}
+	resp.User = req
+	return nil
+}
+
+func (srv *UserService) Auth(ctx context.Context, req *pb.User, resp *pb.Token) error {
+	logrus.Infof("Logging in with : [%s] [%s]", req.Email, req.Password)
+
+	user, err := srv.Repo.GetByEmail(req.Email)
+	if err != nil {
+		logrus.Errorf("GetUserByEmail failed : %s", err.Error())
+		return err
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
+	if err != nil {
+		logrus.Errorf("CompareHashAndPassword failed : %s", err.Error())
+		return err
+	}
+
+	token, err := srv.Token.Encode(user)
+	if err != nil {
+		logrus.Errorf("Encode Token failed : User [%v] error [%v]", user, err)
+		return err
+	}
+
+	resp.Token = token
+	return nil
+}
+
+func (srv *UserService) ValidateToken(ctx context.Context, req *pb.Token, resp *pb.Token) error {
+	claims, err := srv.Token.Decode(req.Token)
+	if err != nil {
+		logrus.Errorf("Decode Token failed: Token [%v] error [%v]", req.Token, err)
+		return err
+	}
+
+	if claims.User.Id == "" {
+		logrus.Errorf("Invalid user: token has [%v]", req)
+		return fmt.Errorf("Invalid user: token has [%v]", req)
+	}
+
+	resp.Valid = true
+
 	return nil
 }

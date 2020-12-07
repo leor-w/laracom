@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 
 	pb "github.com/leor-w/laracom/user-service/proto/user"
 	"github.com/micro/cli/v2"
 	"github.com/micro/go-micro/v2"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 			email := c.String("email")
 			password := c.String("password")
 
-			log.Println("参数:", name, email, password)
+			logrus.Infof("Request params: name [%s] email [%s] password [%s]", name, email, password)
 
 			r, err := client.Create(context.TODO(), &pb.User{
 				Name:     name,
@@ -43,16 +43,16 @@ func main() {
 				Password: password,
 			})
 			if err != nil {
-				log.Fatalf("创建用户失败: %v", err)
+				logrus.Fatalf("创建用户失败: %v", err)
 			}
-			log.Printf("创建用户成功: %s", r.User.Id)
+			logrus.Infof("创建用户成功: %s", r.User.Id)
 
 			getAll, err := client.GetAll(context.Background(), &pb.Request{})
 			if err != nil {
-				log.Fatalf("获取所有用户失败: %v", err)
+				logrus.Fatalf("获取所有用户失败: %v", err)
 			}
 			for _, v := range getAll.Users {
-				log.Println(v)
+				logrus.Println(v)
 			}
 			os.Exit(0)
 			return nil
@@ -60,6 +60,6 @@ func main() {
 	)
 
 	if err := service.Run(); err != nil {
-		log.Fatalf("用户端启动失败: %v", err)
+		logrus.Fatalf("用户端启动失败: %v", err)
 	}
 }
