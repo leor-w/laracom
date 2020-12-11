@@ -9,6 +9,7 @@ import (
 	"github.com/leor-w/laracom/user-service/service"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type UserService struct {
@@ -17,8 +18,18 @@ type UserService struct {
 }
 
 func (srv *UserService) Get(ctx context.Context, req *pb.User, resp *pb.Response) error {
-	user, err := srv.Repo.Get(req.Id)
-	if err != nil {
+	var (
+		user *pb.User
+		err  error
+	)
+
+	if req.Id != "" {
+		user, err = srv.Repo.Get(req.Id)
+	} else if req.Email != "" {
+		user, err = srv.Repo.GetByEmail(req.Email)
+	}
+
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return err
 	}
 	resp.User = user
@@ -87,5 +98,25 @@ func (srv *UserService) ValidateToken(ctx context.Context, req *pb.Token, resp *
 
 	resp.Valid = true
 
+	return nil
+}
+
+func (srv *UserService) Update(ctx context.Context, req *pb.User, resp *pb.Response) error {
+	if req.Id == "" {
+		return fmt.Errorf("用户 [ID] 不能为空")
+	}
+	if req.Password != "" {
+		hashPass, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		if err != nil {
+			logrus.Errorf("Pass password hash failed, error was : %v", err)
+			return err
+		}
+		req.Password = string(hashPass)
+	}
+	if err := srv.Repo.Update(req); err != nil {
+		logrus.Errorf("Update password failed, error was : %v", err)
+		return err
+	}
+	resp.User = req
 	return nil
 }

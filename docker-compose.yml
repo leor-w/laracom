@@ -16,6 +16,8 @@ services:
       DB_NAME: "laracom_user"
       DB_USER: "root"
       DB_PASSWORD: "123456"
+    networks:
+      - microservice
 
   laracom-user-cli:
     build: ./user-cli
@@ -30,6 +32,8 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     restart: always
+    networks:
+      - microservice
     environment:
       MYSQL_DATABASE: "laracom_user"
       MYSQL_ROOT_PASSWORD: "123456"
@@ -42,7 +46,13 @@ services:
       - laracom-user-service
     ports:
       - 8080:8080
+    networks:
+      - microservice
     command: api --handler=rpc --namespace=laracom --type=service --enable_rpc
 
 volumes:
   db_data: {}
+
+networks:
+  microservice:
+    external: true

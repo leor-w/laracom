@@ -45,6 +45,7 @@ type UserService interface {
 	Create(ctx context.Context, in *User, opts ...client.CallOption) (*Response, error)
 	Get(ctx context.Context, in *User, opts ...client.CallOption) (*Response, error)
 	GetAll(ctx context.Context, in *Request, opts ...client.CallOption) (*Response, error)
+	Update(ctx context.Context, in *User, opts ...client.CallOption) (*Response, error)
 	Auth(ctx context.Context, in *User, opts ...client.CallOption) (*Token, error)
 	ValidateToken(ctx context.Context, in *Token, opts ...client.CallOption) (*Token, error)
 }
@@ -91,6 +92,16 @@ func (c *userService) GetAll(ctx context.Context, in *Request, opts ...client.Ca
 	return out, nil
 }
 
+func (c *userService) Update(ctx context.Context, in *User, opts ...client.CallOption) (*Response, error) {
+	req := c.c.NewRequest(c.name, "UserService.Update", in)
+	out := new(Response)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *userService) Auth(ctx context.Context, in *User, opts ...client.CallOption) (*Token, error) {
 	req := c.c.NewRequest(c.name, "UserService.Auth", in)
 	out := new(Token)
@@ -117,6 +128,7 @@ type UserServiceHandler interface {
 	Create(context.Context, *User, *Response) error
 	Get(context.Context, *User, *Response) error
 	GetAll(context.Context, *Request, *Response) error
+	Update(context.Context, *User, *Response) error
 	Auth(context.Context, *User, *Token) error
 	ValidateToken(context.Context, *Token, *Token) error
 }
@@ -126,6 +138,7 @@ func RegisterUserServiceHandler(s server.Server, hdlr UserServiceHandler, opts .
 		Create(ctx context.Context, in *User, out *Response) error
 		Get(ctx context.Context, in *User, out *Response) error
 		GetAll(ctx context.Context, in *Request, out *Response) error
+		Update(ctx context.Context, in *User, out *Response) error
 		Auth(ctx context.Context, in *User, out *Token) error
 		ValidateToken(ctx context.Context, in *Token, out *Token) error
 	}
@@ -150,6 +163,10 @@ func (h *userServiceHandler) Get(ctx context.Context, in *User, out *Response) e
 
 func (h *userServiceHandler) GetAll(ctx context.Context, in *Request, out *Response) error {
 	return h.UserServiceHandler.GetAll(ctx, in, out)
+}
+
+func (h *userServiceHandler) Update(ctx context.Context, in *User, out *Response) error {
+	return h.UserServiceHandler.Update(ctx, in, out)
 }
 
 func (h *userServiceHandler) Auth(ctx context.Context, in *User, out *Token) error {
