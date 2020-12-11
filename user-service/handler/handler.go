@@ -13,8 +13,9 @@ import (
 )
 
 type UserService struct {
-	Repo  repo.Repository
-	Token service.Authable
+	Repo      repo.UserRepositoryInterface
+	ResetRepo repo.PasswordRepositoryInterface
+	Token     service.Authable
 }
 
 func (srv *UserService) Get(ctx context.Context, req *pb.User, resp *pb.Response) error {
@@ -118,5 +119,36 @@ func (srv *UserService) Update(ctx context.Context, req *pb.User, resp *pb.Respo
 		return err
 	}
 	resp.User = req
+	return nil
+}
+
+func (srv *UserService) CreatePasswordReset(ctx context.Context, req *pb.PasswordReset, resp *pb.PasswordResetResponse) error {
+	if req.Email == "" {
+		logrus.Errorf("CreatePasswordReset failed : email field can not be empty!")
+		return fmt.Errorf("邮箱不能为空")
+	}
+	err := srv.ResetRepo.Create(req)
+	if err != nil {
+		logrus.Errorf("Insert PasswordReset failed : %v", err)
+		return err
+	}
+	resp.PasswordReset = req
+	return nil
+}
+
+func (srv UserService) ValidatePasswordResetToke(ctx context.Context, req *pb.Token, resp *pb.Token) error {
+	if req.Token == "" {
+		logrus.Errorf("Token field can not be empty!")
+		return fmt.Errorf("Token 不能为空")
+	}
+	_, err := srv.ResetRepo.GetByToken(req.Token)
+	if err != nil && err != gorm.ErrRecordNotFound {
+		logrus.Errorf("GetPasswordResetByToken failed : %v", err)
+		return fmt.Errorf("数据库查询异常")
+	}
+
+	if err != gorm.ErrRecordNotFound {
+		resp.Valid = true
+	}
 	return nil
 }

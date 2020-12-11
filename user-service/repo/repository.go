@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type Repository interface {
+type UserRepositoryInterface interface {
 	Create(user *pb.User) error
 	Get(id string) (*pb.User, error)
 	GetByEmail(email string) (*pb.User, error)

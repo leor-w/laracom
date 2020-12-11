@@ -23,7 +23,7 @@ type Authable interface {
 }
 
 type TokenService struct {
-	Repo repo.Repository
+	Repo repo.UserRepositoryInterface
 }
 
 func (srv *TokenService) Decode(tokenStr string) (*CustomClaims, error) {

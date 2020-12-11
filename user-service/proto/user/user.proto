@@ -37,12 +37,29 @@ message Response {
   repeated Error errors = 3;
 }
 
+message PasswordReset {
+  string email = 1;
+  string token = 2;
+  string create_at = 3;
+}
+
+message PasswordResetResponse {
+  PasswordReset passwordReset = 1;
+  repeated Error errors = 2;
+}
+
 service UserService {
+  // 用户基础接口
   rpc Create(User) returns (Response) {}
   rpc Get(User) returns (Response) {}
   rpc GetAll(Request) returns (Response) {}
   rpc Update(User) returns (Response) {}
 
+  // token 验证接口
   rpc Auth(User) returns (Token) {}
   rpc ValidateToken(Token) returns (Token) {}
+
+  // 密码重置接口
+  rpc CreatePasswordReset(PasswordReset) returns (PasswordResetResponse) {}
+  rpc ValidatePasswordResetToke (Token) returns (Token) {}
 }
