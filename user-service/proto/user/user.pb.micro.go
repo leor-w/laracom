@@ -53,6 +53,7 @@ type UserService interface {
 	// 密码重置接口
 	CreatePasswordReset(ctx context.Context, in *PasswordReset, opts ...client.CallOption) (*PasswordResetResponse, error)
 	ValidatePasswordResetToke(ctx context.Context, in *Token, opts ...client.CallOption) (*Token, error)
+	DeletePasswordReset(ctx context.Context, in *PasswordReset, opts ...client.CallOption) (*PasswordResetResponse, error)
 }
 
 type userService struct {
@@ -147,6 +148,16 @@ func (c *userService) ValidatePasswordResetToke(ctx context.Context, in *Token, 
 	return out, nil
 }
 
+func (c *userService) DeletePasswordReset(ctx context.Context, in *PasswordReset, opts ...client.CallOption) (*PasswordResetResponse, error) {
+	req := c.c.NewRequest(c.name, "UserService.DeletePasswordReset", in)
+	out := new(PasswordResetResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // Server API for UserService service
 
 type UserServiceHandler interface {
@@ -161,6 +172,7 @@ type UserServiceHandler interface {
 	// 密码重置接口
 	CreatePasswordReset(context.Context, *PasswordReset, *PasswordResetResponse) error
 	ValidatePasswordResetToke(context.Context, *Token, *Token) error
+	DeletePasswordReset(context.Context, *PasswordReset, *PasswordResetResponse) error
 }
 
 func RegisterUserServiceHandler(s server.Server, hdlr UserServiceHandler, opts ...server.HandlerOption) error {
@@ -173,6 +185,7 @@ func RegisterUserServiceHandler(s server.Server, hdlr UserServiceHandler, opts .
 		ValidateToken(ctx context.Context, in *Token, out *Token) error
 		CreatePasswordReset(ctx context.Context, in *PasswordReset, out *PasswordResetResponse) error
 		ValidatePasswordResetToke(ctx context.Context, in *Token, out *Token) error
+		DeletePasswordReset(ctx context.Context, in *PasswordReset, out *PasswordResetResponse) error
 	}
 	type UserService struct {
 		userService
@@ -215,4 +228,8 @@ func (h *userServiceHandler) CreatePasswordReset(ctx context.Context, in *Passwo
 
 func (h *userServiceHandler) ValidatePasswordResetToke(ctx context.Context, in *Token, out *Token) error {
 	return h.UserServiceHandler.ValidatePasswordResetToke(ctx, in, out)
+}
+
+func (h *userServiceHandler) DeletePasswordReset(ctx context.Context, in *PasswordReset, out *PasswordResetResponse) error {
+	return h.UserServiceHandler.DeletePasswordReset(ctx, in, out)
 }

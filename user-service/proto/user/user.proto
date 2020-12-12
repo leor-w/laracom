@@ -62,4 +62,5 @@ service UserService {
   // 密码重置接口
   rpc CreatePasswordReset(PasswordReset) returns (PasswordResetResponse) {}
   rpc ValidatePasswordResetToke (Token) returns (Token) {}
+  rpc DeletePasswordReset(PasswordReset) returns (PasswordResetResponse) {}
 }

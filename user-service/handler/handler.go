@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	pb "github.com/leor-w/laracom/user-service/proto/user"
@@ -150,5 +151,24 @@ func (srv UserService) ValidatePasswordResetToke(ctx context.Context, req *pb.To
 	if err != gorm.ErrRecordNotFound {
 		resp.Valid = true
 	}
+	return nil
+}
+
+func (srv *UserService) DeletePasswordReset(ctx context.Context, req *pb.PasswordReset, resp *pb.PasswordResetResponse) error {
+	if req.Email == "" {
+		return errors.New("Email 不能为空")
+	}
+
+	_, err := srv.ResetRepo.GetByEmail(req.Email)
+	if err != nil {
+		return errors.New("查询数据库出错")
+	}
+
+	err = srv.ResetRepo.DeletePasswordReset(req)
+	if err != nil {
+		return err
+	}
+
+	resp.PasswordReset = nil
 	return nil
 }
