@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
+	"github.com/leor-w/laracom/user-service/model"
 	pb "github.com/leor-w/laracom/user-service/proto/user"
 	"github.com/leor-w/laracom/user-service/repo"
 	"github.com/leor-w/laracom/user-service/service"
@@ -21,43 +23,56 @@ type UserService struct {
 
 func (srv *UserService) Get(ctx context.Context, req *pb.User, resp *pb.Response) error {
 	var (
-		user *pb.User
-		err  error
+		user    = &pb.User{}
+		modUser *model.User
+		id      uint64
+		err     error
 	)
 
 	if req.Id != "" {
-		user, err = srv.Repo.Get(req.Id)
+		id, err = strconv.ParseUint(req.Id, 10, 64)
+		modUser, err = srv.Repo.Get(uint(id))
 	} else if req.Email != "" {
-		user, err = srv.Repo.GetByEmail(req.Email)
+		modUser, err = srv.Repo.GetByEmail(req.Email)
 	}
 
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return err
+	}
+	if modUser != nil {
+		user, _ = modUser.ToProtoBuf()
 	}
 	resp.User = user
 	return nil
 }
 
 func (srv *UserService) GetAll(ctx context.Context, req *pb.Request, resp *pb.Response) error {
+	respUsers := []*pb.User{}
 	users, err := srv.Repo.GetAll()
 	if err != nil {
 		return err
 	}
-	resp.Users = users
+	for _, user := range users {
+		pbUser, _ := user.ToProtoBuf()
+		respUsers = append(respUsers, pbUser)
+	}
+	resp.Users = respUsers
 	return nil
 }
 
 func (srv *UserService) Create(ctx context.Context, req *pb.User, resp *pb.Response) error {
+	modUser := &model.User{}
 	hashedPass, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 	req.Password = string(hashedPass)
-	err = srv.Repo.Create(req)
+	modUser.ToORM(req)
+	err = srv.Repo.Create(modUser)
 	if err != nil {
 		return err
 	}
-	resp.User = req
+	resp.User, _ = modUser.ToProtoBuf()
 	return nil
 }
 
@@ -93,7 +108,7 @@ func (srv *UserService) ValidateToken(ctx context.Context, req *pb.Token, resp *
 		return err
 	}
 
-	if claims.User.Id == "" {
+	if claims.User.ID <= 0 {
 		logrus.Errorf("Invalid user: token has [%v]", req)
 		return fmt.Errorf("Invalid user: token has [%v]", req)
 	}
@@ -104,6 +119,7 @@ func (srv *UserService) ValidateToken(ctx context.Context, req *pb.Token, resp *
 }
 
 func (srv *UserService) Update(ctx context.Context, req *pb.User, resp *pb.Response) error {
+	model := &model.User{}
 	if req.Id == "" {
 		return fmt.Errorf("用户 [ID] 不能为空")
 	}
@@ -115,25 +131,28 @@ func (srv *UserService) Update(ctx context.Context, req *pb.User, resp *pb.Respo
 		}
 		req.Password = string(hashPass)
 	}
-	if err := srv.Repo.Update(req); err != nil {
+	model.ToORM(req)
+	if err := srv.Repo.Update(model); err != nil {
 		logrus.Errorf("Update password failed, error was : %v", err)
 		return err
 	}
-	resp.User = req
+	resp.User, _ = model.ToProtoBuf()
 	return nil
 }
 
 func (srv *UserService) CreatePasswordReset(ctx context.Context, req *pb.PasswordReset, resp *pb.PasswordResetResponse) error {
+	modUser := &model.PasswordReset{}
 	if req.Email == "" {
 		logrus.Errorf("CreatePasswordReset failed : email field can not be empty!")
 		return fmt.Errorf("邮箱不能为空")
 	}
-	err := srv.ResetRepo.Create(req)
+	modUser.ToORM(req)
+	err := srv.ResetRepo.Create(modUser)
 	if err != nil {
 		logrus.Errorf("Insert PasswordReset failed : %v", err)
 		return err
 	}
-	resp.PasswordReset = req
+	resp.PasswordReset, _ = modUser.ToProtoBuf()
 	return nil
 }
 
@@ -155,6 +174,7 @@ func (srv UserService) ValidatePasswordResetToke(ctx context.Context, req *pb.To
 }
 
 func (srv *UserService) DeletePasswordReset(ctx context.Context, req *pb.PasswordReset, resp *pb.PasswordResetResponse) error {
+	modPassword := &model.PasswordReset{}
 	if req.Email == "" {
 		return errors.New("Email 不能为空")
 	}
@@ -164,7 +184,8 @@ func (srv *UserService) DeletePasswordReset(ctx context.Context, req *pb.Passwor
 		return errors.New("查询数据库出错")
 	}
 
-	err = srv.ResetRepo.DeletePasswordReset(req)
+	modPassword.ToORM(req)
+	err = srv.ResetRepo.DeletePasswordReset(modPassword)
 	if err != nil {
 		return err
 	}

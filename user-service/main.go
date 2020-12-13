@@ -6,6 +6,7 @@ import (
 
 	database "github.com/leor-w/laracom/user-service/db"
 	"github.com/leor-w/laracom/user-service/handler"
+	"github.com/leor-w/laracom/user-service/model"
 	pb "github.com/leor-w/laracom/user-service/proto/user"
 	repository "github.com/leor-w/laracom/user-service/repo"
 	"github.com/leor-w/laracom/user-service/service"
@@ -19,8 +20,8 @@ func main() {
 		log.Fatalf("Could not connect to DB: %v", err)
 	}
 
-	err = db.AutoMigrate(&pb.User{})
-	err = db.AutoMigrate(&pb.PasswordReset{})
+	err = db.AutoMigrate(&model.User{})
+	err = db.AutoMigrate(&model.PasswordReset{})
 	if err != nil {
 		logrus.Errorf("DatabaseAutoMigrate failed : %v", err)
 		return

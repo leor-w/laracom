@@ -1,22 +1,22 @@
 package repo
 
 import (
-	pb "github.com/leor-w/laracom/user-service/proto/user"
+	"github.com/leor-w/laracom/user-service/model"
 	"gorm.io/gorm"
 )
 
 type PasswordRepositoryInterface interface {
-	Create(reset *pb.PasswordReset) error
-	GetByToken(token string) (*pb.PasswordReset, error)
-	DeletePasswordReset(reset *pb.PasswordReset) error
-	GetByEmail(email string) (*pb.PasswordReset, error)
+	Create(reset *model.PasswordReset) error
+	GetByToken(token string) (*model.PasswordReset, error)
+	DeletePasswordReset(reset *model.PasswordReset) error
+	GetByEmail(email string) (*model.PasswordReset, error)
 }
 
 type PasswordRepository struct {
 	Db *gorm.DB
 }
 
-func (repo *PasswordRepository) Create(reset *pb.PasswordReset) error {
+func (repo *PasswordRepository) Create(reset *model.PasswordReset) error {
 	err := repo.Db.Create(reset).Error
 	if err != nil {
 		return err
@@ -24,9 +24,9 @@ func (repo *PasswordRepository) Create(reset *pb.PasswordReset) error {
 	return nil
 }
 
-func (repo *PasswordRepository) GetByToken(token string) (*pb.PasswordReset, error) {
+func (repo *PasswordRepository) GetByToken(token string) (*model.PasswordReset, error) {
 	var (
-		reset = &pb.PasswordReset{}
+		reset = &model.PasswordReset{}
 		err   error
 	)
 	err = repo.Db.Where("token = ?", token).First(&reset).Error
@@ -36,12 +36,12 @@ func (repo *PasswordRepository) GetByToken(token string) (*pb.PasswordReset, err
 	return reset, nil
 }
 
-func (repo *PasswordRepository) DeletePasswordReset(reset *pb.PasswordReset) error {
+func (repo *PasswordRepository) DeletePasswordReset(reset *model.PasswordReset) error {
 	return repo.Db.Delete(reset).Error
 }
 
-func (repo *PasswordRepository) GetByEmail(email string) (*pb.PasswordReset, error) {
-	reset := &pb.PasswordReset{}
+func (repo *PasswordRepository) GetByEmail(email string) (*model.PasswordReset, error) {
+	reset := &model.PasswordReset{}
 	err := repo.Db.Where("email = ?", email).Error
 	if err != nil {
 		return nil, err
