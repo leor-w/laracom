@@ -26,7 +26,7 @@ func (repo *UserRepository) Create(user *model.User) error {
 
 func (repo *UserRepository) Get(id uint) (*model.User, error) {
 	user := &model.User{}
-	user.ID = id
+	user.Id = id
 	err := repo.Db.First(&user).Error
 	if err != nil {
 		return nil, err

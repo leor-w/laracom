@@ -8,7 +8,7 @@ import (
 )
 
 type User struct {
-	ID            uint   `gorm:"primarykey;autoIncrement;<-:create"`
+	Id            uint   `gorm:"primarykey;autoIncrement;<-:create"`
 	Name          string `gorm:"type:varchar(100)"`
 	Email         string `gorm:"type:varchar(100)"`
 	Password      string
@@ -28,7 +28,7 @@ func (model *User) ToORM(req *pb.User) error {
 		if err != nil {
 			return err
 		}
-		model.ID = uint(id)
+		model.Id = uint(id)
 	}
 	if req.Name != "" {
 		model.Name = req.Name
@@ -64,7 +64,7 @@ func (model *User) ToORM(req *pb.User) error {
 // 将 orm 转换为 proto user
 func (model *User) ToProtoBuf() (*pb.User, error) {
 	user := &pb.User{}
-	user.Id = strconv.FormatUint(uint64(model.ID), 10)
+	user.Id = strconv.FormatUint(uint64(model.Id), 10)
 	user.Name = model.Name
 	user.Email = model.Email
 	user.Status = strconv.FormatUint(uint64(model.Status), 10)

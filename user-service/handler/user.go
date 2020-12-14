@@ -113,7 +113,7 @@ func (srv *UserService) ValidateToken(ctx context.Context, req *pb.Token, resp *
 		return err
 	}
 
-	if claims.User.ID <= 0 {
+	if claims.User.Id <= 0 {
 		logrus.Errorf("Invalid user: token has [%v]", req)
 		return fmt.Errorf("Invalid user: token has [%v]", req)
 	}
@@ -126,7 +126,7 @@ func (srv *UserService) ValidateToken(ctx context.Context, req *pb.Token, resp *
 func (srv *UserService) Update(ctx context.Context, req *pb.User, resp *pb.Response) error {
 	model := &model.User{}
 	if req.Id == "" {
-		return fmt.Errorf("用户 [ID] 不能为空")
+		return fmt.Errorf("用户 [Id] 不能为空")
 	}
 	if req.Password != "" {
 		hashPass, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
