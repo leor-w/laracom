@@ -2,9 +2,11 @@
 version: '3.3'
 
 services:
+  # 用户服务
   laracom-user-service:
     depends_on:
       - laracom-user-db
+      - laracom-nats
     build:
       ./user-service
     ports:
@@ -12,6 +14,8 @@ services:
     environment:
       MICRO_SERVER_ADDRESS: ":9091"
       MICRO_REGISTRY: "mdns"
+      MICRO_BROKER: "nats"
+      MICRO_BROKER_ADDRESS: "laracom-nats:4222"
       DB_HOST: "laracom-user-db:3306"
       DB_NAME: "laracom_user"
       DB_USER: "root"
@@ -19,11 +23,13 @@ services:
     networks:
       - microservice
 
+  # 用户服务客户端
   laracom-user-cli:
     build: ./user-cli
     environment:
       MICRO_REGISTRY: "mdns"
 
+  # 用户服务数据库
   laracom-user-db:
     image: mysql:5.7
     container_name: laracom-user-db
@@ -38,6 +44,7 @@ services:
       MYSQL_DATABASE: "laracom_user"
       MYSQL_ROOT_PASSWORD: "123456"
 
+  # micro API 网关服务
   laracom-micro-api:
     image: micro/micro:v2.9.3
     environment:
@@ -49,6 +56,15 @@ services:
     networks:
       - microservice
     command: api --handler=rpc --namespace=laracom --type=service --enable_rpc
+
+  # nats 服务
+  laracom-nats:
+    image: nats:latest
+    ports:
+      - 4222:4222
+    restart: always
+    networks:
+      - microservice
 
 volumes:
   db_data: {}

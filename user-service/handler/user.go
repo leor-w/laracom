@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -10,15 +11,19 @@ import (
 	pb "github.com/leor-w/laracom/user-service/proto/user"
 	"github.com/leor-w/laracom/user-service/repo"
 	"github.com/leor-w/laracom/user-service/service"
+	"github.com/micro/go-micro/v2/broker"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
+const topic = "password.reset"
+
 type UserService struct {
 	Repo      repo.UserRepositoryInterface
 	ResetRepo repo.PasswordRepositoryInterface
 	Token     service.Authable
+	PubSub    broker.Broker
 }
 
 func (srv *UserService) Get(ctx context.Context, req *pb.User, resp *pb.Response) error {
@@ -141,18 +146,24 @@ func (srv *UserService) Update(ctx context.Context, req *pb.User, resp *pb.Respo
 }
 
 func (srv *UserService) CreatePasswordReset(ctx context.Context, req *pb.PasswordReset, resp *pb.PasswordResetResponse) error {
-	modUser := &model.PasswordReset{}
+	passwordReset := &model.PasswordReset{}
 	if req.Email == "" {
 		logrus.Errorf("CreatePasswordReset failed : email field can not be empty!")
 		return fmt.Errorf("邮箱不能为空")
 	}
-	modUser.ToORM(req)
-	err := srv.ResetRepo.Create(modUser)
+	passwordReset.ToORM(req)
+	err := srv.ResetRepo.Create(passwordReset)
 	if err != nil {
 		logrus.Errorf("Insert PasswordReset failed : %v", err)
 		return err
 	}
-	resp.PasswordReset, _ = modUser.ToProtoBuf()
+	if passwordReset != nil {
+		resp.PasswordReset, _ = passwordReset.ToProtoBuf()
+		err := srv.publishEvent(resp.PasswordReset)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -191,5 +202,26 @@ func (srv *UserService) DeletePasswordReset(ctx context.Context, req *pb.Passwor
 	}
 
 	resp.PasswordReset = nil
+	return nil
+}
+
+func (srv *UserService) publishEvent(reset *pb.PasswordReset) error {
+	body, err := json.Marshal(reset)
+	if err != nil {
+		logrus.Errorf("publishEvent marshal json faild %v", err)
+		return err
+	}
+
+	msg := &broker.Message{
+		Header: map[string]string{
+			"email": reset.Email,
+		},
+		Body: body,
+	}
+
+	if err := srv.PubSub.Publish(topic, msg); err != nil {
+		logrus.Errorf("publishEvent publish message failed : %v", err)
+		return err
+	}
 	return nil
 }

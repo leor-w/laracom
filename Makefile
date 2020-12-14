@@ -8,7 +8,7 @@ run_user_cli:
 	docker-compose run -d laracom-user-cli --name="test" --email="test@leor.com" --password="123456"
 run_user_db:
 	docker-compose up -d laracom-user-db
-run_micro_api_d:
-	docker-compose up -d laracom-micro-api
 run_micro_api:
-	docker-compose up laracom-micro-api
+	docker-compose up -d laracom-micro-api
+run_nats:
+	docker-compose up -d laracom-nats

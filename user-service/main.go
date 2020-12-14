@@ -39,6 +39,13 @@ func main() {
 	)
 	srv.Init()
 
+	pubSub := srv.Server().Options().Broker
+	err = pubSub.Connect()
+	defer pubSub.Disconnect()
+	if err != nil {
+		logrus.Fatalf("Connect nats failed : %v", err)
+	}
+
 	// 注册处理器
 	pb.RegisterUserServiceHandler(
 		srv.Server(),
@@ -46,6 +53,7 @@ func main() {
 			Repo:      repo,
 			ResetRepo: passwordRepo,
 			Token:     token,
+			PubSub:    pubSub,
 		},
 	)
 
