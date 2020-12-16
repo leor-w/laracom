@@ -26,6 +26,10 @@ type Product struct {
 	MassUnit     string    `gorm:"type:varchar(255)"`
 	CreatedAt    time.Time `gorm:"<-:create"`
 	UpdatedAt    time.Time
+	Brand        Brand
+	Attributes   []*ProductAttribute
+	Images       []*ProductImage
+	Categories   []*Category `gorm:"many2many:category_product;"`
 }
 
 func (model *Product) ToORM(req *pb.Product) {
@@ -82,9 +86,8 @@ func (model *Product) ToORM(req *pb.Product) {
 	}
 }
 
-func (model *Product) ToProtobuf() (*pb.Product, error) {
-
-	return &pb.Product{
+func (model *Product) ToProtobuf() *pb.Product {
+	product := &pb.Product{
 		Id:           uint32(model.Id),
 		BrandId:      model.BrandId,
 		Sku:          model.Sku,
@@ -102,7 +105,28 @@ func (model *Product) ToProtobuf() (*pb.Product, error) {
 		Weight:       model.Weight,
 		DistanceUint: model.DistanceUnit,
 		MassUint:     model.MassUnit,
-		CreatedAt:    model.CreatedAt.Format("2006-01-02 15:04:05"),
-		UpdatedAt:    model.UpdatedAt.Format("2006-01-02 15:04:05"),
-	}, nil
+		CreatedAt:    model.CreatedAt.Format(Format),
+		UpdatedAt:    model.UpdatedAt.Format(Format),
+	}
+	if model.Images != nil {
+		product.Images = ProductImageToProtobufArray(model.Images)
+	}
+	if model.Brand.ID != 0 {
+		product.Brand = model.Brand.ToProtobuf()
+	}
+	if model.Categories != nil {
+		product.Categories = CategoryToProtobufArray(model.Categories)
+	}
+	if model.Attributes != nil {
+		product.Attributes = ProductAttributeToProtobufArray(model.Attributes)
+	}
+	return product
+}
+
+func ProductProtobufToArray(models []*Product) []*pb.Product {
+	products := []*pb.Product{}
+	for _, model := range models {
+		products = append(products, model.ToProtobuf())
+	}
+	return products
 }

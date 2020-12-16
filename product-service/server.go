@@ -17,6 +17,12 @@ func main() {
 	}
 
 	err = database.AutoMigrate(&model.Product{})
+	err = database.AutoMigrate(&model.ProductImage{})
+	err = database.AutoMigrate(&model.Brand{})
+	err = database.AutoMigrate(&model.Category{})
+	err = database.AutoMigrate(&model.Attribute{})
+	err = database.AutoMigrate(&model.AttributeValue{})
+	err = database.AutoMigrate(&model.ProductAttribute{})
 	if err != nil {
 		logrus.Fatalf("Migrate database failed: %v", err)
 	}
@@ -28,13 +34,11 @@ func main() {
 
 	srv.Init()
 
-	pb.RegisterProductServiceHandler(
-		srv.Server(),
-		&handler.ProductService{
-			ProductRepo: &repo.ProductRepository{
-				Db: database,
-			},
-		})
+	pb.RegisterProductServiceHandler(srv.Server(), &handler.ProductService{ProductRepo: &repo.ProductRepository{Db: database}})
+	pb.RegisterImageServiceHandler(srv.Server(), &handler.ImageService{ImageRepo: &repo.ImageRepository{Db: database}})
+	pb.RegisterBrandServiceHandler(srv.Server(), &handler.BrandService{BrandRepo: &repo.BrandRepository{Db: database}})
+	pb.RegisterCategoryServiceHandler(srv.Server(), &handler.CategoryService{CategoryRepo: &repo.CategoryRepository{Db: database}})
+	pb.RegisterAttributeServiceHandler(srv.Server(), &handler.AttributeService{AttributeRepo: &repo.AttributeRepository{Db: database}})
 
 	if err := srv.Run(); err != nil {
 		logrus.Fatalf("Running Service failed: %v", err)

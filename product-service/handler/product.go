@@ -14,6 +14,36 @@ type ProductService struct {
 	ProductRepo repo.ProductRepositoryInterface
 }
 
+func (srv *ProductService) Create(ctx context.Context, req *pb.Product, resp *pb.Response) error {
+	productModel := &model.Product{}
+	productModel.ToORM(req)
+	if err := srv.ProductRepo.Create(productModel); err != nil {
+		return err
+	}
+	resp.Product = productModel.ToProtobuf()
+	return nil
+}
+
+func (srv *ProductService) Delete(ctx context.Context, req *pb.Product, resp *pb.Response) error {
+	productModel := &model.Product{}
+	productModel.ToORM(req)
+	if err := srv.ProductRepo.Delete(productModel); err != nil {
+		return err
+	}
+	resp.Product = productModel.ToProtobuf()
+	return nil
+}
+
+func (srv *ProductService) Update(ctx context.Context, req *pb.Product, resp *pb.Response) error {
+	productModel := &model.Product{}
+	productModel.ToORM(req)
+	if err := srv.ProductRepo.Update(productModel); err != nil {
+		return err
+	}
+	resp.Product = productModel.ToProtobuf()
+	return nil
+}
+
 func (srv *ProductService) Get(ctx context.Context, req *pb.Product, resp *pb.Response) error {
 	if req.Id == 0 && req.Slug == "" {
 		return fmt.Errorf("商品 ID 与 Slug 不能都为空")
@@ -31,38 +61,12 @@ func (srv *ProductService) Get(ctx context.Context, req *pb.Product, resp *pb.Re
 		return err
 	}
 	if productModel != nil {
-		resp.Product, _ = productModel.ToProtobuf()
+		resp.Product = productModel.ToProtobuf()
 	}
 	return nil
 }
 
-func (srv *ProductService) Create(ctx context.Context, req *pb.Product, resp *pb.Response) error {
-	productModel := &model.Product{}
-	productModel.ToORM(req)
-	if err := srv.ProductRepo.Create(productModel); err != nil {
-		return err
-	}
-	resp.Product, _ = productModel.ToProtobuf()
-	return nil
-}
-
-func (srv *ProductService) Update(ctx context.Context, req *pb.Product, resp *pb.Response) error {
-	productModel := &model.Product{}
-	productModel.ToORM(req)
-	if err := srv.ProductRepo.Update(productModel); err != nil {
-		return err
-	}
-	resp.Product, _ = productModel.ToProtobuf()
-	return nil
-}
-
-func (srv *ProductService) Delete(ctx context.Context, req *pb.Product, resp *pb.Response) error {
-	productModel := &model.Product{}
-	productModel.ToORM(req)
-	if err := srv.ProductRepo.Delete(productModel); err != nil {
-		return err
-	}
-	resp.Product, _ = productModel.ToProtobuf()
+func (srv *ProductService) GetDetail(ctx context.Context, req *pb.Product, resp *pb.Response) error {
 	return nil
 }
 
@@ -73,7 +77,7 @@ func (srv *ProductService) GetAll(ctx context.Context, req *pb.Request, resp *pb
 	}
 	var products []*pb.Product
 	for _, productModel := range productModels {
-		product, _ := productModel.ToProtobuf()
+		product := productModel.ToProtobuf()
 		products = append(products, product)
 	}
 	resp.Products = products
