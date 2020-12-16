@@ -9,7 +9,7 @@ import (
 // User 创建前执行的钩子
 //func (model *User) BeforeCreate(db *gorm.DB) error {
 //	uuid := gouuid.NewV4()
-//	model.Id = uuid.String()
+//	model.ID = uuid.String()
 //	return nil
 //}
 

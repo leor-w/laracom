@@ -8,7 +8,7 @@ import (
 )
 
 type User struct {
-	Id            uint   `gorm:"primarykey;autoIncrement;<-:create"`
+	Id            uint   `gorm:"primary_key;autoIncrement;<-:create"`
 	Name          string `gorm:"type:varchar(100)"`
 	Email         string `gorm:"type:varchar(100)"`
 	Password      string
