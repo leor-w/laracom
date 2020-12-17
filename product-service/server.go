@@ -2,17 +2,23 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/leor-w/laracom/product-service/db"
 	"github.com/leor-w/laracom/product-service/handler"
 	"github.com/leor-w/laracom/product-service/model"
 	pb "github.com/leor-w/laracom/product-service/proto/product"
 	"github.com/leor-w/laracom/product-service/repo"
+	"github.com/leor-w/laracom/product-service/trace"
 	"github.com/micro/go-micro/v2"
 	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
+	tracePlugin "github.com/micro/go-plugins/wrapper/trace/opentracing/v2"
+	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
+
+const ProductServiceName = "laracom.service.product"
 
 func prometheusBoot() {
 	http.Handle("/metrics", promhttp.Handler())
@@ -41,10 +47,18 @@ func main() {
 		logrus.Fatalf("Migrate database failed: %v", err)
 	}
 
+	tracer, close, err := trace.NewTracer(ProductServiceName, os.Getenv("MICRO_TRACE_SERVER"))
+	if err != nil {
+		logrus.Fatalf("create trace failed : %v", err)
+	}
+	defer close.Close()
+	opentracing.SetGlobalTracer(tracer)
+
 	srv := micro.NewService(
-		micro.Name("laracom.service.product"),
+		micro.Name(ProductServiceName),
 		micro.Version("latest"),
 		micro.WrapHandler(prometheus.NewHandlerWrapper()),
+		micro.WrapHandler(tracePlugin.NewHandlerWrapper(opentracing.GlobalTracer())),
 	)
 
 	srv.Init()
