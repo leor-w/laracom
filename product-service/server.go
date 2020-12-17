@@ -1,14 +1,28 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/leor-w/laracom/product-service/db"
 	"github.com/leor-w/laracom/product-service/handler"
 	"github.com/leor-w/laracom/product-service/model"
 	pb "github.com/leor-w/laracom/product-service/proto/product"
 	"github.com/leor-w/laracom/product-service/repo"
 	"github.com/micro/go-micro/v2"
+	"github.com/micro/go-plugins/wrapper/monitoring/prometheus/v2"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
+
+func prometheusBoot() {
+	http.Handle("/metrics", promhttp.Handler())
+	go func() {
+		err := http.ListenAndServe(":9092", nil)
+		if err != nil {
+			logrus.Fatalf("ListenAndServer: %v", err)
+		}
+	}()
+}
 
 func main() {
 	database, err := db.CreateConnection()
@@ -30,6 +44,7 @@ func main() {
 	srv := micro.NewService(
 		micro.Name("laracom.service.product"),
 		micro.Version("latest"),
+		micro.WrapHandler(prometheus.NewHandlerWrapper()),
 	)
 
 	srv.Init()
@@ -39,6 +54,8 @@ func main() {
 	pb.RegisterBrandServiceHandler(srv.Server(), &handler.BrandService{BrandRepo: &repo.BrandRepository{Db: database}})
 	pb.RegisterCategoryServiceHandler(srv.Server(), &handler.CategoryService{CategoryRepo: &repo.CategoryRepository{Db: database}})
 	pb.RegisterAttributeServiceHandler(srv.Server(), &handler.AttributeService{AttributeRepo: &repo.AttributeRepository{Db: database}})
+
+	prometheusBoot()
 
 	if err := srv.Run(); err != nil {
 		logrus.Fatalf("Running Service failed: %v", err)

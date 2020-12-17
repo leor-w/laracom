@@ -7,15 +7,15 @@ import (
 )
 
 type Product struct {
-	Id           uint      `gorm:"primarykey;autoIncrement;<-:create"`
-	BrandId      uint32    `gorm:"type:varchar(255)"`
+	Id           uint      `gorm:"primaryKey;autoIncrement;<-:create"`
+	BrandId      uint      `gorm:"type:bigint;default:0"`
 	Sku          string    `gorm:"type:varchar(255)"`
 	Name         string    `gorm:"type:varchar(255)"`
 	Slug         string    `gorm:"type:varchar(255)"`
 	Description  string    `gorm:"type:text"`
 	Cover        string    `gorm:"type:varchar(255)"`
-	Quantity     uint32    `gorm:"unsigned, default:0"`
-	Price        float32   `grom:"type:decimal(8,2)"`
+	Quantity     uint32    `gorm:"unsigned,default:0"`
+	Price        float32   `gorm:"type:decimal(8,2)"`
 	SalePrice    float32   `gorm:"type:decimal(8,2)"`
 	Status       uint8     `gorm:"unsigned,default:0"`
 	Length       float32   `gorm:"type:decimal(8,2)"`
@@ -26,7 +26,7 @@ type Product struct {
 	MassUnit     string    `gorm:"type:varchar(255)"`
 	CreatedAt    time.Time `gorm:"<-:create"`
 	UpdatedAt    time.Time
-	Brand        Brand
+	Brand        Brand `gorm:"-"`
 	Attributes   []*ProductAttribute
 	Images       []*ProductImage
 	Categories   []*Category `gorm:"many2many:category_product;"`
@@ -37,7 +37,7 @@ func (model *Product) ToORM(req *pb.Product) {
 		model.Id = uint(req.Id)
 	}
 	if req.BrandId != 0 {
-		model.BrandId = req.BrandId
+		model.BrandId = uint(req.BrandId)
 	}
 	if req.Sku != "" {
 		model.Sku = req.Sku
@@ -89,7 +89,7 @@ func (model *Product) ToORM(req *pb.Product) {
 func (model *Product) ToProtobuf() *pb.Product {
 	product := &pb.Product{
 		Id:           uint32(model.Id),
-		BrandId:      model.BrandId,
+		BrandId:      uint32(model.BrandId),
 		Sku:          model.Sku,
 		Name:         model.Name,
 		Slug:         model.Slug,

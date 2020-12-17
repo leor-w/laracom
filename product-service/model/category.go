@@ -7,7 +7,7 @@ import (
 )
 
 type Category struct {
-	ID          uint      `gorm:"primary_key;autoIncrement;<-:create"`
+	ID          uint      `gorm:"primaryKey;autoIncrement;<-:create"`
 	Name        string    `gorm:"type:varchar(255);unique_index"`
 	Slug        string    `gorm:"type:varchar(255)"`
 	Description string    `gorm:"type:text"`

@@ -5,11 +5,14 @@ FROM golang:1.14-alpine as builder
 
 # 启用 Go Modules 并设置 GOPROXY
 ENV GO111MODULE on
-ENV GOPROXY https://goproxy.cn
+ENV GOPROXY https://goproxy.cn, direct
+ENV TIME_ZONE Asia/Shanghai
 
 # 更新安装源
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
-apk --no-cache add git
+apk --no-cache add git && \
+ln -snf /usr/share/zoneinfo/$TIME_ZONE /etc/localtime && \
+echo $TIME_ZONE > /etc/timezone
 
 # 设置工作目录
 WORKDIR /app/laracom-user-service
@@ -18,7 +21,7 @@ WORKDIR /app/laracom-user-service
 COPY . .
 
 # 下载依赖
-RUN go mod download && \
+RUN go mod tidy && \
 CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o laracom-user-service
 
 # 下面是第二阶段的镜像构建，和之前保持一致

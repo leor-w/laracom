@@ -7,7 +7,7 @@ import (
 )
 
 type ProductAttribute struct {
-	ID              uint      `gorm:"primary_key;autoIncrement;<-:create"`
+	ID              uint      `gorm:"primaryKey;autoIncrement;<-:create"`
 	ProductId       uint      `gorm:"undefined,default:0;index"`
 	Quantity        uint32    `gorm:"unsigned,default:0"`
 	Price           float32   `gorm:"type:decimal(8,2)"`

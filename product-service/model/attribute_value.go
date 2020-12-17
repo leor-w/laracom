@@ -7,10 +7,10 @@ import (
 )
 
 type AttributeValue struct {
-	ID                uint   `gorm:"primary_key;autoIncrement;<-:create"`
-	Value             string `gorm:"type:varchar(255)"`
-	AttributeId       uint   `gorm:"undefined,default:0;index"`
-	Attribute         Attribute
+	ID                uint                `gorm:"primaryKey;autoIncrement;<-:create"`
+	Value             string              `gorm:"type:varchar(255)"`
+	AttributeId       uint                `gorm:"undefined,default:0;index"`
+	Attribute         Attribute           `gorm:"foreignKey:ID"`
 	ProductAttributes []*ProductAttribute `gorm:"many2many:attribute_value_product_attribute"`
 	CreatedAt         time.Time           `gorm:"<-:create"`
 	UpdatedAt         time.Time

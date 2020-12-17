@@ -40,3 +40,21 @@ run_micro_api:
 # 启动 nats 服务
 run_nats:
 	docker-compose up -d laracom-nats
+
+# 启动 Etcd
+run_etcd:
+	docker-compose up -d laracom-etcd
+
+# 启动 micro web
+run_web_dashboard:
+	docker-compose up -d laracom-web-dashboard
+
+# 启动 e3w
+run_e3w:
+	docker-compose up -d e3w
+
+run_node_exporter:
+	docker-compose up -d node-exporter
+
+run_grafana:
+	docker-compose up -d grafana

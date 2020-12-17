@@ -3,7 +3,7 @@ package model
 import pb "github.com/leor-w/laracom/product-service/proto/product"
 
 type ProductImage struct {
-	ID        uint   `gorm:"primary_key;autoIncrement;<-:create"`
+	ID        uint   `gorm:"primaryKey;autoIncrement;<-:create"`
 	ProductId uint   `gorm:"unsigned, default:0;index"`
 	Src       string `gorm:"type:varchar(255)"`
 }

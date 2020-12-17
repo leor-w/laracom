@@ -7,10 +7,10 @@ import (
 )
 
 type Attribute struct {
-	ID        uint   `gorm:"primary_key;autoIncrement;<-:create"`
-	Name      string `gorm:"type:varchar(255);unique_index"`
-	Values    []*AttributeValue
-	CreatedAt time.Time `gorm:"<-:create"`
+	ID        uint              `gorm:"primaryKey;autoIncrement;<-:create"`
+	Name      string            `gorm:"type:varchar(255);unique_index"`
+	Values    []*AttributeValue `gorm:"foreignKey:ID"`
+	CreatedAt time.Time         `gorm:"<-:create"`
 	UpdatedAt time.Time
 }
 

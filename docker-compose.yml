@@ -7,13 +7,17 @@ services:
     depends_on:
       - laracom-user-db
       - laracom-nats
+      - etcd-1
+      - etcd-2
+      - etcd-3
     build:
       ./user-service
     ports:
       - 9091:9091
     environment:
       MICRO_SERVER_ADDRESS: ":9091"
-      MICRO_REGISTRY: "mdns"
+      MICRO_REGISTRY: "etcd"
+      MICRO_REGISTRY_ADDRESS: "etcd-1:2379,etcd-2:2379,etcd-3:2379"
       MICRO_BROKER: "nats"
       MICRO_BROKER_ADDRESS: "laracom-nats:4222"
       DB_HOST: "laracom-user-db:3306"
@@ -27,13 +31,17 @@ services:
   laracom-product-service:
     depends_on:
       - laracom-product-db
+      - etcd-1
+      - etcd-2
+      - etcd-3
     build:
       ./product-service
     ports:
       - 9093:9091
     environment:
       MICRO_SERVER_ADDRESS: ":9091"
-      MICRO_REGISTRY: "mdns"
+      MICRO_REGISTRY: "etcd"
+      MICRO_REGISTRY_ADDRESS: "etcd-1:2379,etcd-2:2379,etcd-3:2379"
       DB_HOST: "laracom-product-db:3306"
       DB_NAME: "laracom_product"
       DB_USER: "product"
@@ -45,7 +53,10 @@ services:
   laracom-user-cli:
     build: ./user-cli
     environment:
-      MICRO_REGISTRY: "mdns"
+      MICRO_REGISTRY: "etcd"
+      MICRO_REGISTRY_ADDRESS: "etcd-1:2379,etcd-2:2379,etcd-3:2379"
+    networks:
+      - microservice
 
   # 用户服务数据库
   laracom-user-db:
@@ -59,6 +70,7 @@ services:
     networks:
       - microservice
     environment:
+      TZ: "Asia/Shanghai"
       MYSQL_USER: "user"
       MYSQL_PASSWORD: "test"
       MYSQL_DATABASE: "laracom_user"
@@ -76,6 +88,7 @@ services:
     networks:
       - microservice
     environment:
+      TZ: "Asia/Shanghai"
       MYSQL_USER: "product"
       MYSQL_PASSWORD: "test"
       MYSQL_DATABASE: "laracom_product"
@@ -86,7 +99,9 @@ services:
     image: micro/micro:v2.9.3
     container_name: laracom-micro-api
     environment:
-      MICRO_REGISTRY: "mdns"
+      TZ: "Asia/Shanghai"
+      MICRO_REGISTRY: "etcd"
+      MICRO_REGISTRY_ADDRESS: "etcd-1:2379,etcd-2:2379,etcd-3:2379"
     links:
       - laracom-user-service
       - laracom-product-service
@@ -101,13 +116,195 @@ services:
     image: nats:latest
     ports:
       - 4222:4222
+    environment:
+      TZ: "Asia/Shanghai"
     restart: always
     networks:
       - microservice
 
+  # Etcd
+  etcd-1:
+    image: bitnami/etcd:latest
+    environment:
+      TZ: "Asia/Shanghai"
+      ALLOW_NONE_AUTHENTICATION: "yes"
+      ETCD_NAME: "etcd-1"
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: "http://etcd-1:2380"
+      ETCD_LISTEN_PEER_URLS: "http://0.0.0.0:2380"
+      ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
+      ETCD_ADVERTISE_CLIENT_URLS: "http://etcd-1:2379"
+      ETCD_INITIAL_CLUSTER_TOKEN: "etcd-cluster"
+      ETCD_INITIAL_CLUSTER: "etcd-1=http://etcd-1:2380,etcd-2=http://etcd-2:2380,etcd-3=http://etcd-3:2380"
+      ETCD_INITIAL_CLUSTER_STATE: "new"
+    ports:
+      - 23791:2379
+      - 23801:2380
+    networks:
+      - microservice
+
+  etcd-2:
+    image: bitnami/etcd:latest
+    environment:
+      TZ: "Asia/Shanghai"
+      ALLOW_NONE_AUTHENTICATION: "yes"
+      ETCD_NAME: "etcd-2"
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: "http://etcd-2:2380"
+      ETCD_LISTEN_PEER_URLS: "http://0.0.0.0:2380"
+      ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
+      ETCD_ADVERTISE_CLIENT_URLS: "http://etcd-2:2379"
+      ETCD_INITIAL_CLUSTER_TOKEN: "etcd-cluster"
+      ETCD_INITIAL_CLUSTER: "etcd-1=http://etcd-1:2380,etcd-2=http://etcd-2:2380,etcd-3=http://etcd-3:2380"
+      ETCD_INITIAL_CLUSTER_STATE: "new"
+    ports:
+      - 23792:2379
+      - 23802:2380
+    networks:
+      - microservice
+
+  etcd-3:
+    image: bitnami/etcd:latest
+    environment:
+      TZ: "Asia/Shanghai"
+      ALLOW_NONE_AUTHENTICATION: "yes"
+      ETCD_NAME: "etcd-3"
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: "http://etcd-3:2380"
+      ETCD_LISTEN_PEER_URLS: "http://0.0.0.0:2380"
+      ETCD_LISTEN_CLIENT_URLS: "http://0.0.0.0:2379"
+      ETCD_ADVERTISE_CLIENT_URLS: "http://etcd-3:2379"
+      ETCD_INITIAL_CLUSTER_TOKEN: "etcd-cluster"
+      ETCD_INITIAL_CLUSTER: "etcd-1=http://etcd-1:2380,etcd-2=http://etcd-2:2380,etcd-3=http://etcd-3:2380"
+      ETCD_INITIAL_CLUSTER_STATE: "new"
+    ports:
+      - 23793:2379
+      - 23803:2380
+    networks:
+      - microservice
+
+  # micro web 服务
+  laracom-web-dashboard:
+    image: micro/micro:v2.9.3
+    container_name: laracom-web-dashboard
+    environment:
+      TZ: "Asia/Shanghai"
+      MICRO_REGISTRY: "etcd"
+      MICRO_REGISTRY_ADDRESS: "etcd-1:2379,etcd-2:2379,etcd-3:2379"
+    links:
+      - laracom-user-service
+      - laracom-product-service
+    ports:
+      - 8082:8082
+    networks:
+      - microservice
+    command: web
+
+  # etcd web ui
+  e3w:
+    image: soyking/e3w:latest
+    ports:
+      - 8088:8080
+    volumes:
+      - ./conf/e3w/config.ini:/app/conf/config.default.ini
+    networks:
+      - microservice
+
+  # prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+    - ./conf/prometheus/:/etc/prometheus/
+    - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+    - 9090:9090
+    links:
+      - cadvisor:cadvisor
+      - alertmanager:alertmanager
+    depends_on:
+      - cadvisor
+    networks:
+      - microservice
+    restart: always
+    #deploy:
+    #  placment:
+    #    constraints:
+    #      - node.hostname == ${HOSTNAME}
+
+  node-exporter:
+    image: prom/node-exporter
+    volumes:
+    - /proc:/host/proc:ro
+    - /sys:/host/sys:ro
+    - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - --collector.filesystem.ignored-mount-points
+      - "^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)"
+    ports:
+      - 9100:9100
+    networks:
+      - microservice
+    restart: always
+    deploy:
+      mode: global
+
+  alertmanager:
+    image: prom/alertmanager
+    ports:
+      - 9993:9093
+    volumes:
+      - ./conf/alertmanager/:/etc/alertmanager/
+    networks:
+      - microservice
+    restart: always
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    #    deploy:
+    #      placement:
+    #        constraints:
+    #          - node.hostname == ${HOSTNAME}
+
+  cadvisor:
+    image: google/cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - 8083:8080
+    networks:
+      - microservice
+    restart: always
+    deploy:
+      mode: global
+
+  grafana:
+    image: grafana/grafana
+    user: "104"
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./conf/grafana/provisioning/:/etc/grafana/provisioning/
+    env_file:
+      - ./conf/grafana/config.monitoring
+    networks:
+      - microservice
+    restart: always
+
 volumes:
   db_user_data: {}
   db_product_data: {}
+  grafana_data: {}
+  prometheus_data: {}
 
 networks:
   microservice:

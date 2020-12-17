@@ -7,9 +7,9 @@ import (
 )
 
 type Brand struct {
-	ID        uint   `gorm:"primary_key;autoIncrement;<-:create"`
-	Name      string `gorm:"type:varchar(255)"`
-	Products  []*Product
+	ID        uint       `gorm:"primaryKey;autoIncrement;<-:create"`
+	Name      string     `gorm:"type:varchar(255)"`
+	Products  []*Product `gorm:"-"`
 	CreatedAt *time.Time `gorm:"<-:create"`
 	UpdatedAt *time.Time
 }
