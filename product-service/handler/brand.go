@@ -7,6 +7,8 @@ import (
 	"github.com/leor-w/laracom/product-service/model"
 	pb "github.com/leor-w/laracom/product-service/proto/product"
 	"github.com/leor-w/laracom/product-service/repo"
+	"github.com/micro/go-micro/v2/metadata"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -15,6 +17,18 @@ type BrandService struct {
 }
 
 func (srv *BrandService) Create(ctx context.Context, req *pb.Brand, resp *pb.BrandResponse) error {
+	md, ok := metadata.FromContext(ctx)
+	if !ok {
+		md = make(map[string]string)
+	}
+	var sp opentracing.Span
+	wireContext, _ := opentracing.GlobalTracer().Extract(opentracing.TextMap, opentracing.TextMapCarrier(md))
+	sp = opentracing.StartSpan("GetCategory", opentracing.ChildOf(wireContext))
+	sp.SetTag("req", req)
+	defer func() {
+		sp.SetTag("resp", resp)
+		sp.Finish()
+	}()
 	model := &model.Brand{}
 	model.ToORM(req)
 	err := srv.BrandRepo.Create(model)
@@ -48,6 +62,18 @@ func (srv *BrandService) Delete(ctx context.Context, req *pb.Brand, resp *pb.Bra
 }
 
 func (srv *BrandService) Get(ctx context.Context, req *pb.Brand, resp *pb.BrandResponse) error {
+	md, ok := metadata.FromContext(ctx)
+	if !ok {
+		md = make(map[string]string)
+	}
+	var sp opentracing.Span
+	wireContext, _ := opentracing.GlobalTracer().Extract(opentracing.TextMap, opentracing.TextMapCarrier(md))
+	sp = opentracing.StartSpan("GetCategory", opentracing.ChildOf(wireContext))
+	sp.SetTag("req", req)
+	defer func() {
+		sp.SetTag("resp", resp)
+		sp.Finish()
+	}()
 	if req.Id == 0 {
 		return fmt.Errorf("not find brand with id : id = %d", req.Id)
 	}

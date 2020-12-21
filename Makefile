@@ -25,6 +25,11 @@ run_product_service:
 	docker-compose up --build -d laracom-product-service
 #######################
 
+build_product_cli:
+	docker-compose build laracom-product-cli --name="Apple"
+run_product_cli:
+	docker-compose up --build -d laracom-product-cli --name="Apple"
+
 # 启动用户数据库服务
 run_user_db:
 	docker-compose up -d laracom-user-db
@@ -58,3 +63,6 @@ run_node_exporter:
 
 run_grafana:
 	docker-compose up -d grafana
+
+run_jaeger:
+	docker-compose up -d jaeger
